@@ -6,11 +6,11 @@ const { ClanModel } = models
 // Create clan
 router.post('/create', validateJWT, async (req, res) => {
     const { name, description } = req.body.clan;
-    const { id } = req.user;
+    const userId = req.user.id;
     const ClanEntry = {
         name,
-        description, 
-        owner: id
+        description,
+        owner: userId
     }
     try {
         const newClan = await ClanModel.create(ClanEntry);
@@ -22,49 +22,63 @@ router.post('/create', validateJWT, async (req, res) => {
 });
 
 // Update clan name and info
-router.put('/update/:clanId', validateJWT, async (req, res) => {
-    const { name, description } = req.body.clan;
-    const userId = req.user.id;
-    const clanId = req.params.clanId;
+router.put('/update/:id', validateJWT, async (req, res) => {
+    const { name, description, owner } = req.body.clan;
+    const userRole = req.user.role;
+    const targetId = req.params.id;
 
     const query = {
         where: {
-            id: clanId,
-            owner: userId
+            id: targetId
         }
     };
 
     const updateClan = {
         name: name,
         description: description,
-     
+        owner: owner
     };
 
-    try {
-        const update = await ClanModel.update(updateClan, query);
-        res.status(200).json(update);
-    } catch (err) {
-        res.status(500).json({ error: err});
+    if(userRole === 'admin' || userRole === 'leader') {
+        try {
+            const foundClan = await ClanModel.findOne(query);
+            if(foundClan){
+                await ClanModel.update(updateClan, query)
+                res.status(200).json(updateClan)
+            } else {
+                res.status(400).json({message: 'Cannot update clan'})
+            }
+            
+            // const update = await ClanModel.update(updateClan, query);
+            // res.status(200).json(update);
+        } catch(err) {
+            res.status(500).json({ error: err });
+        }
+    } else {
+        res.status(401).json({ message: 'Unauthorized.'})
     }
 });
 
-// Delete clan - adding this for functionality, but not planning direct access in v1.0
+// Delete clan - adding this for functionality, but not planning direct user access in v1.0
 router.delete("/delete/:id", validateJWT, async (req, res) => {
-    const userId = req.user.id;
-    const clanId = req.params.id;
+    const userRole = req.user.role;
+    const targetId = req.params.id
 
-    try {
-        const query = {
-            where: {
-                id: clanId,
-                owner: userId
-            }
-        };
+    if(userRole === "admin") {
+        try {
+            const query = {
+                where: {
+                    id: targetId
+                }
+            };
 
         await ClanModel.destroy(query);
-        res.status(200).json({ message: "Clan has been deleted!" });
-    } catch (err) {
-        res.status(500).json({ error: err });
+        res.status(200).json({ message: 'Clan has been removed from the database.' });
+        } catch (err) {
+            res.status(500).json({ error: `${err}` });
+        }
+    } else {
+        res.status(401).json({ message: 'Unauthorized.'})
     }
 });
 

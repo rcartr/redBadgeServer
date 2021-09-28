@@ -4,78 +4,91 @@ const { models } = require('../models');
 const { EventModel } = models
 
 router.post('/create', validateJWT, async (req, res) => {
-    const { name, date, description } = req.body.clan;
-    const { id } = req.user;
+    const { eventName, eventDate, eventDescription } = req.body.event;
+    const { id, username, role } = req.user
     const EventEntry = {
-        name,
-        date,
-        description, 
-        owner: id
+        eventName,
+        eventDate,
+        eventDescription, 
+        createdBy: username,
+        clanId: id
     }
-    try {
-        const newEvent = await EventModel.create(EventEntry);
-        res.status(200).json(newEvent);
-    } catch (err) {
-        res.status(500).json({ error: err });
+    
+    if(role === 'admin') {
+        try {
+            const newEvent = await EventModel.create(EventEntry);
+            res.status(200).json(newEvent);
+        } catch (err) {
+            res.status(500).json({ error: `${err}` });
+        }
+    } else {
+        res.status(401).json({ message: 'Unauthorized.'})
     }
+
 
 });
 
 //Update
-router.put('/update/:eventId', validateJWT, async (req, res) => {
-    const { name, date, description } = req.body.clan;
-    const userId = req.user.id;
-    const clanId = req.params.clanId;
+router.put('/update/:id', validateJWT, async (req, res) => {
+    const { eventName, eventDate, eventDescription } = req.body.event;
+    const { username, role, clanId } = req.user;
+    const targetId = req.params.id;
 
     const query = {
         where: {
-            id: clanId,
-            owner: userId
+            id: targetId,
+            clanId: clanId
         }
     };
 
     const updateEvent = {
-        name: name,
-        date: date,
-        description: description,
-     
+        eventName: eventName,
+        eventDate: eventDate,
+        eventDescription: eventDescription,
+        createdBy: username
     };
 
-    try {
-        const update = await EventModel.update(updateEvent, query);
-        res.status(200).json(update);
-    } catch (err) {
-        res.status(500).json({ error: err});
+    if(role === 'admin' || role === 'leader') {
+
+        try {
+            const update = await EventModel.update(updateEvent, query);
+            res.status(200).json(updateEvent);
+        } catch (err) {
+            res.status(500).json({ error: err});
+        }
     }
 });
 
 router.delete("/delete/:id", validateJWT, async (req, res) => {
-    const userId = req.user.id;
-    const eventId = req.params.id;
+    const userRole = req.user.role;
+    const targetId = req.params.id;
 
-    try {
-        const query = {
-            where: {
-                id: eventId,
-                owner: userId
-            }
-        };
+    if(userRole === 'admin' || userRole === 'leader') {
 
-        await EventModel.destroy(query);
-        res.status(200).json({ message: "Event has been deleted!" });
-    } catch (err) {
-        res.status(500).json({ error: err });
+        try {
+            const query = {
+                where: {
+                    id: targetId
+                }
+            };
+            
+            await EventModel.destroy(query);
+            res.status(200).json({ message: "Event has been deleted!" });
+        } catch (err) {
+            res.status(500).json({ error: `${err}` });
+        }
     }
 });
 
 
 // Get all Events /events endpoint
-router.get("/", validateJWT, async(req, res)=>{
-    let {id} = req.user;
+router.get("/show", validateJWT, async(req, res)=>{
+    let clanId = req.user.clanId;
+
     try{
         const eventList = await EventModel.findAll({
             where: {
-                owner: id
+                clanId: clanId
             }
         });
         res.status(200).json(eventList);

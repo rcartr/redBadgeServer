@@ -18,9 +18,11 @@ const User = db.define("user", {
         require: false,
         type: DataTypes.STRING(50)
     },
-    roleId: {
+    role: {
         require: false,
-        type: DataTypes.INTEGER,
+        type: DataTypes.ENUM,
+        values: ['admin', 'leader', 'member'],
+        defaultValue: 'member'
     }
 });
 

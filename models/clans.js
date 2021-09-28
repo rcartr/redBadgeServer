@@ -11,7 +11,7 @@ const Clans = db.define('clans', {
         allowNull: false,
     },
     owner: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
     }
 });

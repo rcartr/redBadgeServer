@@ -7,7 +7,7 @@ const Events = db.define('events', {
         allowNull: false,
     },
     eventDate: {
-        type: DataTypes.DATE,
+        type: DataTypes.STRING,
         allowNull: false,
     },
     eventDescription: {
