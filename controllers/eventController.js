@@ -5,25 +5,22 @@ const { EventModel } = models
 
 router.post('/create', validateJWT, async (req, res) => {
     const { eventName, eventDate, eventDescription } = req.body.event;
-    const { id, username, role } = req.user
+    const { id, username, role, clanId } = req.user
     const EventEntry = {
         eventName,
         eventDate,
         eventDescription, 
         createdBy: username,
-        clanId: id
+        clanId: clanId
     }
     
-    if(role === 'admin') {
-        try {
+    try {
             const newEvent = await EventModel.create(EventEntry);
             res.status(200).json(newEvent);
         } catch (err) {
             res.status(500).json({ error: `${err}` });
         }
-    } else {
-        res.status(401).json({ message: 'Unauthorized.'})
-    }
+    
 
 
 });

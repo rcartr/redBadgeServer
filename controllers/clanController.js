@@ -82,4 +82,20 @@ router.delete("/delete/:id", validateJWT, async (req, res) => {
     }
 });
 
+// Get clan information for display
+router.get("/show", validateJWT, async(req, res)=>{
+    let clanId = req.user.clanId;
+
+    try{
+        const clanInfo = await ClanModel.findAll({
+            where: {
+                id: clanId
+            }
+        });
+        res.status(200).json(clanInfo);
+    } catch (err) {
+        res.status(500).json({ error: `${err}` });
+    }
+});
+
 module.exports = router;

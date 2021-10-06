@@ -18,9 +18,10 @@ router.post('/register', async (req,res) => {
             clanId: clanId
         });
 
-        let token = jwt.sign({id: User.id}, process.env.JWT_SECRET, {expiresIn: "1d"})
+        // let token = jwt.sign({id: User.id}, process.env.JWT_SECRET, {expiresIn: "1d"})
+        let token = jwt.sign({id: User.id, role: User.role, clanId: User.clanId}, process.env.JWT_SECRET, {expiresIn: "1d"})
         res.status(201).json({
-            message: "User Successfully registered",
+            message: "User successfully registered",
             email: email,
             sessionToken: token
         })} catch(err) {
@@ -52,7 +53,7 @@ router.post('/login', async (req,res) => {
         if(loginUser){
             let passwordComparison = await bcrypt.compare(password, loginUser.password)
             if(passwordComparison){
-                let token = jwt.sign({id: loginUser.id}, process.env.JWT_SECRET, {expiresIn:"1d"})
+                let token = jwt.sign({id: loginUser.id, role: loginUser.role, clanId: loginUser.clanId}, process.env.JWT_SECRET, {expiresIn:"1d"})
                 res.status(200).json({
                     message: "User logged in!",
                     sessionToken: token
@@ -95,7 +96,7 @@ router.put('/update/:id', validateJWT, async (req, res) => {
         clanId: clanId
     };
 
-    if(targetId === owner || userRole === 'admin') {
+    if(targetId === owner || userRole === 'admin' || userRole === 'leader') {
         const update = await UserModel.update(updateUser, query);
         try {
             res.status(200).json(updateUser);
