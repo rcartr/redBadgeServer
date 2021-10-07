@@ -76,16 +76,17 @@ router.post('/login', async (req,res) => {
     };
 });
 
-// Update user info
-router.put('/update/:id', validateJWT, async (req, res) => {
+// Update user info, specific intended use case is adding members to clan 
+router.put('/update/:email', validateJWT, async (req, res) => {
     let { email, username, role, clanId } = req.body.user;
-    const owner = req.user.id;
+    const owner = req.user.email;
     const userRole = req.user.role;
     const targetId = req.params.id;
+    const targetEmail = req.params.email
 
     let query = {
         where: {
-            id: targetId
+            email: targetEmail
         }
     };
 
@@ -96,7 +97,7 @@ router.put('/update/:id', validateJWT, async (req, res) => {
         clanId: clanId
     };
 
-    if(targetId === owner || userRole === 'admin' || userRole === 'leader') {
+    if(owner === targetEmail || userRole === 'admin' || userRole === 'leader') {
         const update = await UserModel.update(updateUser, query);
         try {
             res.status(200).json(updateUser);
