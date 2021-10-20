@@ -126,15 +126,15 @@ router.get("/members", validateJWT, async(req, res)=>{
 });
 
 // Delete user. This needs to be tied to role based access in client.
-router.delete("/delete/:id", validateJWT, async (req, res) => {
+router.delete("/delete/:email", validateJWT, async (req, res) => {
     const userRole = req.user.role;
-    const targetId = req.params.id
+    const targetEmail = req.params.email
 
     if(userRole === "admin") {
         try {
             const query = {
                 where: {
-                    id: targetId
+                    email: targetEmail
                 }
             };
 
